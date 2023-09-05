@@ -1,13 +1,16 @@
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./routes";
-import { CssBaseline } from "@mui/material";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+
+const theme = createTheme({});
 
 export const App = () => {
   return (
     <BrowserRouter>
-      {/* Remove os estilos que vem por padrão no html/body. */}
       <CssBaseline />
-      <AppRoutes />
+      <ThemeProvider theme={theme}>
+        <AppRoutes />
+      </ThemeProvider>
     </BrowserRouter>
   );
 };
