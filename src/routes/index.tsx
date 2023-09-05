@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import { Pricing } from "../pages/Pricing";
+import { PriceManager } from "../pages/PriceManager";
 
 export const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Pricing />} />
+      <Route path="/" element={<PriceManager />} />
 
       <Route path="*" element={<Navigate to="/formacao-precos" />} />
     </Routes>
