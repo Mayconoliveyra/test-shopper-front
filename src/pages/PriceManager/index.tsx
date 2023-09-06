@@ -28,7 +28,7 @@ import {
 } from "@mui/icons-material";
 
 import { LayoutBasel } from "../../shared/layouts/LayoutBase";
-import { MyDialog as MyDialogError } from "../../shared/components/MyModal";
+import { MyDialogError } from "../../shared/components/MyModalError";
 
 const VisuallyHiddenInput = styled("input")`
   clip: rect(0 0 0 0);
@@ -54,8 +54,8 @@ export const PriceManager = () => {
   const [fileDataHeaders, setFileDataHeaders] = useState<string[]>([]);
 
   const [myFileHasHeader, setMyFileHasHeader] = useState(true);
-  const [myColumnCode, setMyColumnCode] = useState("");
-  const [myColumnPrice, setMyColumnPrice] = useState("");
+  const [myColumnCode, setMyColumnCode] = useState("Selecione");
+  const [myColumnPrice, setMyColumnPrice] = useState("Selecione");
 
   const inputFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -132,8 +132,8 @@ export const PriceManager = () => {
     const headers = lines[0].split(",");
     const rows: IRowDataFile[] = [];
     setFileDataHeaders(headers);
-    setMyColumnCode(headers[0]);
-    setMyColumnPrice(headers[1]);
+    setMyColumnCode(headers[0] || "Selecione");
+    setMyColumnPrice(headers[1] || "Selecione");
 
     // Percorrer todas as linhas para extrair seus valores.
     for (let l = 0; l < lines.length; l++) {
@@ -174,8 +174,27 @@ export const PriceManager = () => {
     setFileData([]);
     setFileDataHeaders([]);
     setMyFileHasHeader(true);
-    setMyColumnCode("");
-    setMyColumnPrice("");
+    setMyColumnCode("Selecione");
+    setMyColumnPrice("Selecione");
+  };
+
+  const handleValidation = () => {
+    if (myColumnCode === "Selecione") {
+      return newSetDialogError(
+        true,
+        "Erro ao validar",
+        `Por favor, defina a coluna 'Código do produto'.`
+      );
+    }
+    if (myColumnPrice === "Selecione") {
+      return newSetDialogError(
+        true,
+        "Erro ao validar",
+        `Por favor, defina a coluna 'Novo preço de venda'.`
+      );
+    }
+
+    console.log("aa");
   };
 
   return (
@@ -233,6 +252,7 @@ export const PriceManager = () => {
                       <Grid item xs={6} padding={1} border="1px solid #dcdcdc">
                         <FormControl fullWidth size="small">
                           <Select
+                            error={myColumnCode === "Selecione"}
                             id="select-column-1"
                             displayEmpty
                             value={myColumnCode}
@@ -267,6 +287,7 @@ export const PriceManager = () => {
                       >
                         <FormControl fullWidth size="small">
                           <Select
+                            error={myColumnPrice === "Selecione"}
                             id="select-column-2"
                             displayEmpty
                             value={myColumnPrice}
@@ -382,6 +403,7 @@ export const PriceManager = () => {
           {fileData.length > 0 && (
             <Box marginTop={2}>
               <Button
+                onClick={handleValidation}
                 variant="contained"
                 color="success"
                 sx={{
@@ -410,59 +432,9 @@ export const PriceManager = () => {
       </LayoutBasel>
 
       <MyDialogError
-        isOpen={dialogError.open}
-        title={dialogError.title}
-        handleCloseDialog={() => newSetDialogError()}
-      >
-        <Box
-          flex={1}
-          display="flex"
-          flexDirection="column"
-          justifyContent="space-between"
-        >
-          <Box
-            flex={1}
-            padding={4}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-          >
-            <DangerousOutlined
-              sx={{ width: 80, height: 80, marginBottom: 2, color: "#dc3545" }}
-            />
-            <Typography
-              variant="h6"
-              fontSize={lg || md ? "1.3rem" : "1rem"}
-              fontWeight={400}
-              component="span"
-            >
-              {dialogError.textError}
-            </Typography>
-          </Box>
-
-          <Box marginTop={8}>
-            <Divider variant="fullWidth" />
-          </Box>
-          <Box padding={2} display="flex" justifyContent="flex-end">
-            <Button
-              onClick={() => newSetDialogError()}
-              variant="contained"
-              disableElevation
-              disableFocusRipple
-              disableRipple
-              disableTouchRipple
-              size="large"
-              sx={{
-                borderRadius: 1,
-                backgroundColor: "#495057",
-                "&:hover": { backgroundColor: "#495057" },
-              }}
-            >
-              OK
-            </Button>
-          </Box>
-        </Box>
-      </MyDialogError>
+        dialogError={dialogError}
+        handleClose={() => newSetDialogError()}
+      />
     </>
   );
 };
