@@ -31,13 +31,17 @@ const VisuallyHiddenInput = styled("input")`
   width: 1px;
 `;
 
+interface IRowDataFile {
+  [key: string]: number | string | {};
+}
+
 export const PriceManager = () => {
   const md = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm")); // width < 600px = return true
   const lg = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg")); // width > 1200px = return true
 
   const theme = useTheme();
 
-  const [data, setData] = useState([]);
+  const [fileData, setFileData] = useState<IRowDataFile[]>([]);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -102,27 +106,48 @@ export const PriceManager = () => {
     inputRef.current = newInput;
   }, [handleFileUpload]);
 
-  const processData = (content: string) => {
-    const lines = content.split("\n");
+  const processData = useCallback((content: string) => {
+    // Vou separar meu arquivos em linhas, o map vai servir para remover os espaços em brancos no inicio ou final do texto.
+    const lines = content
+      .trim()
+      .split("\n")
+      .map((line) => line.trim());
     const headers = lines[0].split(",");
-    const rows: any = [];
+    const rows: IRowDataFile[] = [];
 
-    // Aqui vou percorrer todas linhas do arquivo.
-    for (let l = 1; l < lines.length; l++) {
+    // Percorrer todas as linhas para extrair seus valores.
+    for (let l = 0; l < lines.length; l++) {
       const currentLine = lines[l].split(",");
+      const row: IRowDataFile = {};
 
-      const row: { [key: string]: string | number } = {};
-
-      for (let h = 0; h < headers.length; h++) {
-        /*    if (typeof currentLine[h] !== "number") return; */
-        row[headers[h]] = currentLine[h];
-        console.log(row[headers[h]]);
+      // Verifico se a quantidade de colunas da linha é igual a do cabeçalho, se for diferente retornar erro.
+      // Pela lógica todas as linhas, inclusive o cabeçalho, tem que ter a mesma quantidade de colunas.
+      if (currentLine.length === headers.length) {
+        // Aqui vou percorrer o cabeçalho e utilizar seus valores como chaves.
+        for (let h = 0; h < headers.length; h++) {
+          const valueNumber = Number(currentLine[h]) || "";
+          if (typeof valueNumber === "number") {
+            row[headers[h]] = valueNumber;
+          } else {
+            row.error = {
+              msgError: `Aguardava-se um valor numérico para '${headers[h]}', porém foi recebido: '${currentLine[h]}'`,
+              line: lines[l],
+            };
+          }
+        }
+      } else {
+        row.error = {
+          msgError:
+            "O número de colunas não está alinhado com os demais registros.",
+          line: lines[l],
+        };
       }
+
       rows.push(row);
     }
 
-    setData(rows);
-  };
+    setFileData(rows);
+  }, []);
 
   return (
     <>
