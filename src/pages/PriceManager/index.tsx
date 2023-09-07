@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Divider,
   FormControl,
   FormControlLabel,
   Grid,
@@ -24,7 +23,6 @@ import {
   Close,
   CloseRounded,
   CloudUpload,
-  DangerousOutlined,
 } from "@mui/icons-material";
 
 import { LayoutBasel } from "../../shared/layouts/LayoutBase";
