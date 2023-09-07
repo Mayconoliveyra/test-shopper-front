@@ -28,6 +28,8 @@ import {
 import { LayoutBasel } from "../../shared/layouts/LayoutBase";
 import { MyDialogError } from "../../shared/components/MyModalError";
 
+import { PriceManagerService } from "../../shared/services/api/priceManager";
+
 const VisuallyHiddenInput = styled("input")`
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
@@ -51,6 +53,7 @@ export const PriceManager = () => {
   const [fileData, setFileData] = useState<IRowDataFile[]>([]);
   const [fileDataHeaders, setFileDataHeaders] = useState<string[]>([]);
 
+  const [myFileCSV, setMyFileCSV] = useState<FormData | null>(null);
   const [myFileHasHeader, setMyFileHasHeader] = useState(true);
   const [myColumnCode, setMyColumnCode] = useState("Selecione");
   const [myColumnPrice, setMyColumnPrice] = useState("Selecione");
@@ -72,7 +75,7 @@ export const PriceManager = () => {
     setAlertIsOpen(false);
   };
 
-  const handleFileUpload = useCallback(
+  const handleOnSelectFileCSV = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
 
@@ -97,7 +100,35 @@ export const PriceManager = () => {
           );
         }
 
-        processData(e.target.result);
+        // Vou converter o arquivo em um array para poder pegar a primeira linha e utilizar as colunas.
+        const content = e.target.result;
+        const lines = content
+          .trim() // Remove espaços em branco extras no início e no final do arquivo.
+          .split("\n") // Divide o arquivo em linhas
+          .map((line) => line.trim()) // Remove os espaços em branco extras no início e no final de cada linha.
+          .filter((line) => line !== ""); // Filtra linhas vazias
+
+        // Verifico se o arquivo está vazio
+        if (lines.length > 0) {
+          // Seleciono a primeira linha para o usuário definir as colunas 'Código do produto' e 'Novo preco de venda'.
+          const headers = lines[0].split(",");
+
+          setFileDataHeaders(headers);
+          setMyColumnCode(headers[0] || "Selecione");
+          setMyColumnPrice(headers[1] || "Selecione");
+
+          const formData = new FormData();
+          formData.append("csv-file-products", file);
+
+          // Seta o arquivo para ser enviado ao backend ao clicar em validar.
+          setMyFileCSV(formData);
+        } else {
+          return newSetDialogError(
+            true,
+            "Arquivo inválido",
+            "O arquivo CSV está vazio."
+          );
+        }
       };
 
       reader.readAsText(file);
@@ -111,7 +142,7 @@ export const PriceManager = () => {
     const newInput = document.createElement("input");
     newInput.type = "file";
     newInput.accept = ".csv";
-    newInput.addEventListener("change", handleFileUpload as any);
+    newInput.addEventListener("change", handleOnSelectFileCSV as any);
     newInput.style.visibility = "hidden";
     newInput.style.display = "none";
     inputFileRef.current?.parentNode?.replaceChild(
@@ -119,56 +150,11 @@ export const PriceManager = () => {
       inputFileRef.current
     );
     inputFileRef.current = newInput;
-  }, [handleFileUpload]);
-
-  const processData = useCallback((content: string) => {
-    // Vou separar meu arquivos em linhas, o map vai servir para remover os espaços em brancos no inicio ou final do texto.
-    const lines = content
-      .trim()
-      .split("\n")
-      .map((line) => line.trim());
-    const headers = lines[0].split(",");
-    const rows: IRowDataFile[] = [];
-    setFileDataHeaders(headers);
-    setMyColumnCode(headers[0] || "Selecione");
-    setMyColumnPrice(headers[1] || "Selecione");
-
-    // Percorrer todas as linhas para extrair seus valores.
-    for (let l = 0; l < lines.length; l++) {
-      const currentLine = lines[l].split(",");
-      const row: IRowDataFile = {};
-
-      // Verifico se a quantidade de colunas da linha é igual a do cabeçalho, se for diferente retornar erro.
-      // Pela lógica todas as linhas, inclusive o cabeçalho, tem que ter a mesma quantidade de colunas.
-      if (currentLine.length === headers.length) {
-        // Aqui vou percorrer o cabeçalho e utilizar seus valores como chaves.
-        for (let h = 0; h < headers.length; h++) {
-          const valueNumber = Number(currentLine[h]) || "";
-          if (typeof valueNumber === "number") {
-            row[headers[h]] = valueNumber;
-          } else {
-            row.error = {
-              msgError: `Aguardava-se um valor numérico para '${headers[h]}', porém foi recebido: '${currentLine[h]}'`,
-              line: lines[l],
-            };
-          }
-        }
-      } else {
-        row.error = {
-          msgError:
-            "O número de colunas não está alinhado com os demais registros.",
-          line: lines[l],
-        };
-      }
-
-      rows.push(row);
-    }
-
-    setFileData(rows);
-  }, []);
+  }, [handleOnSelectFileCSV]);
 
   const handleCancel = () => {
     newSetDialogError();
+    setMyFileCSV(null);
     setFileData([]);
     setFileDataHeaders([]);
     setMyFileHasHeader(true);
@@ -368,7 +354,7 @@ export const PriceManager = () => {
                       Selecione um arquivo
                       <VisuallyHiddenInput
                         ref={inputFileRef}
-                        onChange={handleFileUpload}
+                        onChange={handleOnSelectFileCSV}
                         type="file"
                         accept=".csv"
                       />
