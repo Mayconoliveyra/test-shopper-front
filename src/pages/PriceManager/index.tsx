@@ -189,6 +189,7 @@ export const PriceManager = () => {
 
     const dataResult = await PriceManagerService.uploadFileCSV(
       myFileCSV,
+      myFileHasHeader ? "true" : "false",
       myColumnCode,
       myColumnPrice
     )
