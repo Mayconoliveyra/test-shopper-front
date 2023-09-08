@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 
 import { MyDialog } from "../MyModal";
+import React from "react";
 
 interface IMyDialogError {
   dialogError: { open: boolean; title: string; textError: string };
@@ -47,7 +48,12 @@ export const MyDialogError = ({ dialogError, handleClose }: IMyDialogError) => {
             fontWeight={400}
             component="span"
           >
-            {dialogError.textError}
+            {dialogError.textError.split("\n").map((parte, index) => (
+              <React.Fragment key={index}>
+                {parte}
+                <br />
+              </React.Fragment>
+            ))}
           </Typography>
         </Box>
 
