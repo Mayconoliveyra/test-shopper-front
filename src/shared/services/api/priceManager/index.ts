@@ -1,7 +1,7 @@
 import { api } from "../axiosConfig";
 import { AxiosResponse } from "axios";
 
-const prefix = "price-manager";
+const prefix = "/price-manager";
 
 const uploadFileCSV = async (
   formData: FormData
