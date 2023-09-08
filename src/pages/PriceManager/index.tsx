@@ -29,6 +29,8 @@ import { LayoutBasel } from "../../shared/layouts/LayoutBase";
 import { MyDialogError } from "../../shared/components/MyModalError";
 
 import { PriceManagerService } from "../../shared/services/api/priceManager";
+import { AxiosError } from "axios";
+import { ResponseError } from "../../shared/services/api/axiosConfig";
 
 const VisuallyHiddenInput = styled("input")`
   clip: rect(0 0 0 0);
@@ -162,7 +164,7 @@ export const PriceManager = () => {
     setMyColumnPrice("Selecione");
   };
 
-  const handleValidation = () => {
+  const handleValidation = async () => {
     if (myColumnCode === "Selecione") {
       return newSetDialogError(
         true,
@@ -177,8 +179,35 @@ export const PriceManager = () => {
         `Por favor, defina a coluna 'Novo preço de venda'.`
       );
     }
+    if (!myFileCSV) {
+      return newSetDialogError(
+        true,
+        "Erro ao validar",
+        `Este arquivo CSV não é válido.`
+      );
+    }
 
-    console.log("aa");
+    const dataResult = await PriceManagerService.uploadFileCSV(
+      myFileCSV,
+      myColumnCode,
+      myColumnPrice
+    )
+      .then((res) => console.log(res))
+      .catch((error: AxiosError<ResponseError>) => {
+        const errorDefault = error.response?.data.errors?.default;
+
+        // Se o error foi tratado ele retornara dentro de errorDefault.
+        if (errorDefault) {
+          newSetDialogError(true, "Arquivo inválido", errorDefault);
+        } else {
+          alert(
+            "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde."
+          );
+        }
+
+        console.log(error);
+      });
+    console.log(dataResult);
   };
 
   return (
@@ -193,7 +222,7 @@ export const PriceManager = () => {
             padding={lg ? 3 : 2}
             paddingY={3}
           >
-            {fileData.length > 0 ? (
+            {myFileCSV ? (
               <Box flex={1} display="flex" flexDirection="column">
                 <Typography variant={lg || md ? "h5" : "h6"}>
                   Defina o que é cada coluna
@@ -384,7 +413,7 @@ export const PriceManager = () => {
             )}
           </Box>
 
-          {fileData.length > 0 && (
+          {myFileCSV && (
             <Box marginTop={2}>
               <Button
                 onClick={handleValidation}
