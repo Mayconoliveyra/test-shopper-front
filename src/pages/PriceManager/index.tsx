@@ -113,7 +113,7 @@ export const PriceManager = () => {
         // Verifico se o arquivo está vazio
         if (lines.length > 0) {
           // Seleciono a primeira linha para o usuário definir as colunas 'Código do produto' e 'Novo preco de venda'.
-          const headers = lines[0].split(",");
+          const headers = lines[0].split(",").map((line) => line.trim()); // Remove os espaços em branco extras no início e no final de cada linha.
 
           setFileDataHeaders(headers);
           setMyColumnCode(headers[0] || "Selecione");
