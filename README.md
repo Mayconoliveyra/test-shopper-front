@@ -9,8 +9,6 @@
 5. Defina as variáveis de ambiente: Dentro do arquivo .env, é necessário o preenchimento de todas.
    REACT_APP_API_URL=
 
-   exemplo:
-   REACT_APP_API_URL=http://10.0.0.200:3030
-   REACT_APP_API_URL=http://localhost:3030
+   exemplo: REACT_APP_API_URL=http://10.0.0.200:3030 ou REACT_APP_API_URL=http://localhost:3030
 
 6. Para iniciar o projeto utilize o comando `npm start`
