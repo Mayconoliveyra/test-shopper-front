@@ -14,7 +14,6 @@ export const LayoutBasel = ({ children }: ILayoutBase) => {
       <Box
         display="flex"
         flexDirection="column"
-        minHeight="100vh"
         component="main"
         paddingTop={theme.spacing(10)}
       >

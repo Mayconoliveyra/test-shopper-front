@@ -2,9 +2,11 @@ import { ChangeEvent, useCallback, useRef, useState } from "react";
 
 import {
   Alert,
+  Backdrop,
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   Grid,
@@ -67,6 +69,7 @@ export const PriceManager = () => {
   const [fileData, setFileData] = useState<IProduto[]>([]);
   const [fileDataHeaders, setFileDataHeaders] = useState<string[]>([]);
 
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileIsValid, setFileIsValid] = useState<boolean>(false);
   const [myFileCSV, setMyFileCSV] = useState<FormData | null>(null);
   const [myFileHasHeader, setMyFileHasHeader] = useState(true);
@@ -201,6 +204,7 @@ export const PriceManager = () => {
       );
     }
 
+    setIsLoading(true);
     const dataResult = await PriceManagerService.uploadFileCSV(
       myFileCSV,
       myFileHasHeader ? "true" : "false",
@@ -228,9 +232,11 @@ export const PriceManager = () => {
       const isError = dataResult.find((produto) => produto.msgError);
       if (!isError) setFileIsValid(true);
     }
+    setIsLoading(false);
   };
 
   const handleUpdatePrices = async () => {
+    setIsLoading(true);
     await PriceManagerService.updatePrices(fileData)
       .then(() => {
         handleCancel();
@@ -249,7 +255,9 @@ export const PriceManager = () => {
 
         console.log(error);
       });
+    setIsLoading(false);
   };
+
   return (
     <>
       <LayoutBasel>
@@ -680,6 +688,16 @@ export const PriceManager = () => {
         dialogError={dialogError}
         handleClose={() => newSetDialogError()}
       />
+
+      <Backdrop
+        sx={{
+          color: "#fff",
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };
