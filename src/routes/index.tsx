@@ -7,7 +7,7 @@ export const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<PriceManager />} />
 
-      <Route path="*" element={<Navigate to="/formacao-precos" />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 };
