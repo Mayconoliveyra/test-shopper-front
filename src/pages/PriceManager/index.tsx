@@ -13,6 +13,12 @@ import {
   Paper,
   Select,
   styled,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Theme,
   Typography,
   useMediaQuery,
@@ -28,7 +34,10 @@ import {
 import { LayoutBasel } from "../../shared/layouts/LayoutBase";
 import { MyDialogError } from "../../shared/components/MyModalError";
 
-import { PriceManagerService } from "../../shared/services/api/priceManager";
+import {
+  IProduto,
+  PriceManagerService,
+} from "../../shared/services/api/priceManager";
 import { AxiosError } from "axios";
 import { ResponseError } from "../../shared/services/api/axiosConfig";
 
@@ -44,17 +53,27 @@ const VisuallyHiddenInput = styled("input")`
   width: 1px;
 `;
 
-interface IRowDataFile {
-  [key: string]: number | string | {};
-}
+const moneyMask = (
+  vlr: number | string | undefined,
+  showRS = true
+): number | string | undefined => {
+  if (typeof vlr === "string" || vlr === undefined) return vlr;
+  const valor = vlr
+    .toFixed(2)
+    .replace(".", ",")
+    .replace(/(\d)(?=(\d{3})+\,)/g, "$1.");
+  if (showRS) return `R$ ${valor}`;
+  return `${valor}`;
+};
 
 export const PriceManager = () => {
   const md = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm")); // width < 600px = return true
   const lg = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg")); // width > 1200px = return true
 
-  const [fileData, setFileData] = useState<IRowDataFile[]>([]);
+  const [fileData, setFileData] = useState<IProduto[]>([]);
   const [fileDataHeaders, setFileDataHeaders] = useState<string[]>([]);
 
+  const [fileIsValid, setFileIsValid] = useState<boolean>(false);
   const [myFileCSV, setMyFileCSV] = useState<FormData | null>(null);
   const [myFileHasHeader, setMyFileHasHeader] = useState(true);
   const [myColumnCode, setMyColumnCode] = useState("Selecione");
@@ -157,6 +176,7 @@ export const PriceManager = () => {
   const handleCancel = () => {
     newSetDialogError();
     setMyFileCSV(null);
+    setFileIsValid(false);
     setFileData([]);
     setFileDataHeaders([]);
     setMyFileHasHeader(true);
@@ -193,7 +213,7 @@ export const PriceManager = () => {
       myColumnCode,
       myColumnPrice
     )
-      .then((res) => console.log(res))
+      .then((res) => res.data)
       .catch((error: AxiosError<ResponseError>) => {
         const errorDefault = error.response?.data.errors?.default;
 
@@ -208,7 +228,12 @@ export const PriceManager = () => {
 
         console.log(error);
       });
-    console.log(dataResult);
+
+    if (dataResult) {
+      setFileData(dataResult);
+      const isError = dataResult.find((produto) => produto.msgError !== null);
+      if (!isError) setFileIsValid(true);
+    }
   };
 
   return (
@@ -220,128 +245,302 @@ export const PriceManager = () => {
             elevation={2}
             display="flex"
             flexDirection={md ? "row" : "column"}
-            padding={lg ? 3 : 2}
-            paddingY={3}
+            padding={fileData.length > 0 ? 1 : lg ? 3 : 2}
+            paddingY={fileData.length > 0 ? 1 : 3}
           >
             {myFileCSV ? (
-              <Box flex={1} display="flex" flexDirection="column">
-                <Typography variant={lg || md ? "h5" : "h6"}>
-                  Defina o que é cada coluna
-                </Typography>
-
-                <Grid container marginTop={1}>
-                  <Grid xs={12} item container>
-                    <Grid xs={12} md={6} lg={4} item container>
-                      <Grid
-                        item
-                        xs={6}
-                        padding={1}
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        border="1px solid #dcdcdc"
-                      >
-                        <Typography variant="subtitle2" component="span">
-                          Código do produto
-                        </Typography>
-                      </Grid>
-                      <Grid
-                        item
-                        xs={6}
-                        padding={1}
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        border="1px solid #dcdcdc"
-                        borderLeft={0}
-                      >
-                        <Typography variant="subtitle2" component="span">
-                          Novo preço de venda
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid xs={12} item container>
-                    <Grid xs={12} md={6} lg={4} item container>
-                      <Grid item xs={6} padding={1} border="1px solid #dcdcdc">
-                        <FormControl fullWidth size="small">
-                          <Select
-                            error={myColumnCode === "Selecione"}
-                            id="select-column-1"
-                            displayEmpty
-                            value={myColumnCode}
-                            onChange={(event) =>
-                              setMyColumnCode(event.target.value)
-                            }
+              <>
+                {fileData.length > 0 ? (
+                  <Box display="flex" width="100%">
+                    <Box
+                      flex={1}
+                      component="table"
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      <Grid container item component="thead">
+                        <Grid
+                          container
+                          item
+                          xs={12}
+                          component="tr"
+                          border="1px solid #dcdcdc"
+                        >
+                          <Grid
+                            item
+                            xs={2}
+                            component="th"
+                            borderRight="1px solid #dcdcdc"
                           >
-                            <MenuItem value="Selecione">Selecione</MenuItem>;
-                            {fileDataHeaders.map((item, key) => {
-                              return (
-                                <MenuItem
-                                  disabled={
-                                    item === myColumnPrice &&
-                                    item !== "Selecione"
-                                  }
-                                  key={key}
-                                  value={item}
-                                >
-                                  {item}
-                                </MenuItem>
-                              );
-                            })}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid
-                        item
-                        xs={6}
-                        padding={1}
-                        border="1px solid #dcdcdc"
-                        borderLeft={0}
-                      >
-                        <FormControl fullWidth size="small">
-                          <Select
-                            error={myColumnPrice === "Selecione"}
-                            id="select-column-2"
-                            displayEmpty
-                            value={myColumnPrice}
-                            onChange={(event) =>
-                              setMyColumnPrice(event.target.value)
-                            }
+                            <Typography variant="subtitle2">Código</Typography>
+                          </Grid>
+                          <Grid
+                            item
+                            xs={2}
+                            component="th"
+                            borderRight="1px solid #dcdcdc"
                           >
-                            <MenuItem value="Selecione">Selecione</MenuItem>;
-                            {fileDataHeaders.map((item, key) => {
-                              return (
-                                <MenuItem
-                                  disabled={
-                                    item === myColumnCode &&
-                                    item !== "Selecione"
-                                  }
-                                  key={key}
-                                  value={item}
-                                >
-                                  {item}
-                                </MenuItem>
-                              );
-                            })}
-                          </Select>
-                        </FormControl>
+                            <Typography variant="subtitle2">Nome</Typography>
+                          </Grid>
+                          <Grid
+                            item
+                            xs={2}
+                            component="th"
+                            borderRight="1px solid #dcdcdc"
+                          >
+                            <Typography variant="subtitle2">
+                              Preço Atual
+                            </Typography>
+                          </Grid>
+                          <Grid
+                            item
+                            xs={2}
+                            component="th"
+                            borderRight="1px solid #dcdcdc"
+                          >
+                            <Typography variant="subtitle2">
+                              Novo Preço
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={4} component="th">
+                            <Typography variant="subtitle2">
+                              Regra Quebrada
+                            </Typography>
+                          </Grid>
+                        </Grid>
                       </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
+                      <Grid container item component="tbody">
+                        {fileData.map((prod) => {
+                          return (
+                            <Grid
+                              key={prod.code}
+                              container
+                              item
+                              xs={12}
+                              component="tr"
+                              border="1px solid #dcdcdc"
+                              borderTop={0}
+                            >
+                              <Grid
+                                item
+                                xs={2}
+                                component="td"
+                                borderRight="1px solid #dcdcdc"
+                              >
+                                <Typography
+                                  variant="body2"
+                                  fontSize="0.75rem"
+                                  lineHeight={1.2}
+                                  padding={0.3}
+                                >
+                                  {prod.code}
+                                </Typography>
+                              </Grid>
 
-                <Box marginTop={1}>
-                  <FormControlLabel
-                    id="my-file-header"
-                    value={myFileHasHeader}
-                    checked={myFileHasHeader}
-                    onClick={() => setMyFileHasHeader((is) => !is)}
-                    control={<Checkbox />}
-                    label="Meu arquivo possui cabeçalhos"
-                  />
-                </Box>
-              </Box>
+                              {prod.msgError ? (
+                                <Grid item xs={10} component="td">
+                                  <Typography
+                                    variant="body2"
+                                    fontSize="0.75rem"
+                                    lineHeight={1.2}
+                                    padding={0.3}
+                                  >
+                                    {prod.msgError}
+                                  </Typography>
+                                </Grid>
+                              ) : (
+                                <>
+                                  <Grid
+                                    item
+                                    xs={2}
+                                    component="td"
+                                    borderRight="1px solid #dcdcdc"
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      fontSize="0.75rem"
+                                      lineHeight={1.2}
+                                      padding={0.3}
+                                    >
+                                      {prod.name}
+                                    </Typography>
+                                  </Grid>
+                                  <Grid
+                                    item
+                                    xs={2}
+                                    component="td"
+                                    borderRight="1px solid #dcdcdc"
+                                    display="flex"
+                                    alignItems="center"
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      fontSize="0.75rem"
+                                      lineHeight={1.2}
+                                      padding={0.3}
+                                    >
+                                      {moneyMask(prod.sales_price, false)}
+                                    </Typography>
+                                  </Grid>
+                                  <Grid
+                                    item
+                                    xs={2}
+                                    component="td"
+                                    borderRight="1px solid #dcdcdc"
+                                    display="flex"
+                                    alignItems="center"
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      fontSize="0.75rem"
+                                      lineHeight={1.2}
+                                      padding={0.3}
+                                    >
+                                      {moneyMask(prod.new_sales_price, false)}
+                                    </Typography>
+                                  </Grid>
+                                </>
+                              )}
+                            </Grid>
+                          );
+                        })}
+                      </Grid>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box flex={1} display="flex" flexDirection="column">
+                    <>
+                      <Typography variant={lg || md ? "h5" : "h6"}>
+                        Defina o que é cada coluna
+                      </Typography>
+
+                      <Grid container marginTop={1}>
+                        <Grid xs={12} item container>
+                          <Grid xs={12} md={6} lg={4} item container>
+                            <Grid
+                              item
+                              xs={6}
+                              padding={1}
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              border="1px solid #dcdcdc"
+                            >
+                              <Typography variant="subtitle2" component="span">
+                                Código do produto
+                              </Typography>
+                            </Grid>
+                            <Grid
+                              item
+                              xs={6}
+                              padding={1}
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              border="1px solid #dcdcdc"
+                              borderLeft={0}
+                            >
+                              <Typography variant="subtitle2" component="span">
+                                Novo preço de venda
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                        <Grid xs={12} item container>
+                          <Grid xs={12} md={6} lg={4} item container>
+                            <Grid
+                              item
+                              xs={6}
+                              padding={1}
+                              border="1px solid #dcdcdc"
+                            >
+                              <FormControl fullWidth size="small">
+                                <Select
+                                  error={myColumnCode === "Selecione"}
+                                  id="select-column-1"
+                                  displayEmpty
+                                  value={myColumnCode}
+                                  onChange={(event) =>
+                                    setMyColumnCode(event.target.value)
+                                  }
+                                >
+                                  <MenuItem value="Selecione">
+                                    Selecione
+                                  </MenuItem>
+                                  ;
+                                  {fileDataHeaders.map((item, key) => {
+                                    return (
+                                      <MenuItem
+                                        disabled={
+                                          item === myColumnPrice &&
+                                          item !== "Selecione"
+                                        }
+                                        key={key}
+                                        value={item}
+                                      >
+                                        {item}
+                                      </MenuItem>
+                                    );
+                                  })}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid
+                              item
+                              xs={6}
+                              padding={1}
+                              border="1px solid #dcdcdc"
+                              borderLeft={0}
+                            >
+                              <FormControl fullWidth size="small">
+                                <Select
+                                  error={myColumnPrice === "Selecione"}
+                                  id="select-column-2"
+                                  displayEmpty
+                                  value={myColumnPrice}
+                                  onChange={(event) =>
+                                    setMyColumnPrice(event.target.value)
+                                  }
+                                >
+                                  <MenuItem value="Selecione">
+                                    Selecione
+                                  </MenuItem>
+                                  ;
+                                  {fileDataHeaders.map((item, key) => {
+                                    return (
+                                      <MenuItem
+                                        disabled={
+                                          item === myColumnCode &&
+                                          item !== "Selecione"
+                                        }
+                                        key={key}
+                                        value={item}
+                                      >
+                                        {item}
+                                      </MenuItem>
+                                    );
+                                  })}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+
+                      <Box marginTop={1}>
+                        <FormControlLabel
+                          id="my-file-header"
+                          value={myFileHasHeader}
+                          checked={myFileHasHeader}
+                          onClick={() => setMyFileHasHeader((is) => !is)}
+                          control={<Checkbox />}
+                          label="Meu arquivo possui cabeçalhos"
+                        />
+                      </Box>
+                    </>
+                  </Box>
+                )}
+              </>
             ) : (
               <>
                 <Box flex={1} paddingX={md ? 2 : 0}>
@@ -416,20 +615,38 @@ export const PriceManager = () => {
 
           {myFileCSV && (
             <Box marginTop={2}>
-              <Button
-                onClick={handleValidation}
-                variant="contained"
-                color="success"
-                sx={{
-                  marginRight: 1,
-                  textTransform: "none",
-                  padding: 1,
-                  paddingX: 3,
-                }}
-                startIcon={<CheckCircleOutline />}
-              >
-                Validar
-              </Button>
+              {fileData.length > 0 ? (
+                <Button
+                  disabled={!fileIsValid}
+                  onClick={handleValidation}
+                  variant="contained"
+                  color="success"
+                  sx={{
+                    marginRight: 1,
+                    textTransform: "none",
+                    padding: 1,
+                    paddingX: 3,
+                  }}
+                  startIcon={<CheckCircleOutline />}
+                >
+                  Atualizar
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleValidation}
+                  variant="contained"
+                  color="success"
+                  sx={{
+                    marginRight: 1,
+                    textTransform: "none",
+                    padding: 1,
+                    paddingX: 3,
+                  }}
+                  startIcon={<CheckCircleOutline />}
+                >
+                  Validar
+                </Button>
+              )}
 
               <Button
                 onClick={handleCancel}
