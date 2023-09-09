@@ -231,11 +231,31 @@ export const PriceManager = () => {
 
     if (dataResult) {
       setFileData(dataResult);
-      const isError = dataResult.find((produto) => produto.msgError !== null);
+      const isError = dataResult.find((produto) => produto.msgError);
       if (!isError) setFileIsValid(true);
     }
   };
 
+  const handleUpdatePrices = async () => {
+    await PriceManagerService.updatePrices(fileData)
+      .then(() => {
+        handleCancel();
+      })
+      .catch((error: AxiosError<ResponseError>) => {
+        const errorDefault = error.response?.data.errors?.default;
+
+        // Se o error foi tratado ele retornara dentro de errorDefault.
+        if (errorDefault) {
+          newSetDialogError(true, "Arquivo inválido", errorDefault);
+        } else {
+          alert(
+            "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde."
+          );
+        }
+
+        console.log(error);
+      });
+  };
   return (
     <>
       <LayoutBasel>
@@ -618,7 +638,7 @@ export const PriceManager = () => {
               {fileData.length > 0 ? (
                 <Button
                   disabled={!fileIsValid}
-                  onClick={handleValidation}
+                  onClick={handleUpdatePrices}
                   variant="contained"
                   color="success"
                   sx={{
