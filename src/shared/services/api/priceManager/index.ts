@@ -31,6 +31,13 @@ const uploadFileCSV = async (
   );
 };
 
+const updatePrices = async (
+  dataProducts: IProduto[]
+): Promise<AxiosResponse<void>> => {
+  return await api.put(`${prefix}/update-prices`, dataProducts);
+};
+
 export const PriceManagerService = {
   uploadFileCSV,
+  updatePrices,
 };
