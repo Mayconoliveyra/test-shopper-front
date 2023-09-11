@@ -3,25 +3,28 @@ import { AxiosResponse } from "axios";
 
 const prefix = "/price-manager";
 
-export interface IProduto {
+interface IProduct {
   code: number;
   name: string;
   cost_price: number;
   sales_price: number;
-  id: number;
-  pack_id: number;
-  product_id: number;
-  qty: number;
-  new_sales_price: number;
-  msgError: string | null;
 }
+interface INewPrice {
+  new_sales_price: number;
+  new_cost_price_pack?: number;
+}
+interface IProductInvalid {
+  code: number;
+  msgError: string;
+}
+export type IProductValidation = (IProduct & INewPrice) | IProductInvalid;
 
 const uploadFileCSV = async (
   formData: FormData,
   fileHasHeader: string,
   nameColumnCode: string,
   nameColumnNewPrice: string
-): Promise<AxiosResponse<IProduto[]>> => {
+): Promise<AxiosResponse<IProductValidation[]>> => {
   return await api.post(
     `${prefix}/upload-file-csv?fileHasHeader=${fileHasHeader}&nameColumnCode=${nameColumnCode}&nameColumnNewPrice=${nameColumnNewPrice}`,
     formData,
@@ -32,7 +35,7 @@ const uploadFileCSV = async (
 };
 
 const updatePrices = async (
-  dataProducts: IProduto[]
+  dataProducts: IProductValidation[]
 ): Promise<AxiosResponse<void>> => {
   return await api.put(`${prefix}/update-prices`, {
     dataProducts,

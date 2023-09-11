@@ -31,7 +31,7 @@ import { LayoutBasel } from "../../shared/layouts/LayoutBase";
 import { MyDialogError } from "../../shared/components/MyModalError";
 
 import {
-  IProduto,
+  IProductValidation,
   PriceManagerService,
 } from "../../shared/services/api/priceManager";
 import { AxiosError } from "axios";
@@ -57,6 +57,7 @@ const moneyMask = (
   const valor = vlr
     .toFixed(2)
     .replace(".", ",")
+    // eslint-disable-next-line no-useless-escape
     .replace(/(\d)(?=(\d{3})+\,)/g, "$1.");
   if (showRS) return `R$ ${valor}`;
   return `${valor}`;
@@ -66,7 +67,7 @@ export const PriceManager = () => {
   const md = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm")); // width < 600px = return true
   const lg = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg")); // width > 1200px = return true
 
-  const [fileData, setFileData] = useState<IProduto[]>([]);
+  const [fileData, setFileData] = useState<IProductValidation[]>([]);
   const [fileDataHeaders, setFileDataHeaders] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -151,6 +152,7 @@ export const PriceManager = () => {
 
       reader.readAsText(file);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -229,7 +231,7 @@ export const PriceManager = () => {
 
     if (dataResult) {
       setFileData(dataResult);
-      const isError = dataResult.find((produto) => produto.msgError);
+      const isError = dataResult.find((produto) => "msgError" in produto);
       if (!isError) setFileIsValid(true);
     }
     setIsLoading(false);
@@ -359,7 +361,7 @@ export const PriceManager = () => {
                                 </Typography>
                               </Grid>
 
-                              {prod.msgError ? (
+                              {"msgError" in prod ? (
                                 <Grid item xs={10} component="td">
                                   <Typography
                                     variant="body2"
