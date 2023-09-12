@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { PriceManager } from '../pages/PriceManager';
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import { PriceManager } from "../pages/PriceManager";
 
 export const AppRoutes = () => {
   return (

@@ -1,17 +1,16 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from "react-router-dom";
+import { AppRoutes } from "./routes";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 
-import { AppRoutes } from './routes';
-import { AppThemeProvider } from './shared/context/ThemeContext';
-import { GlobalStyles } from './shared/themes/globalStyles';
+const theme = createTheme({});
 
 export const App = () => {
   return (
     <BrowserRouter>
-      <AppThemeProvider>
-        <GlobalStyles />
-
+      <CssBaseline />
+      <ThemeProvider theme={theme}>
         <AppRoutes />
-      </AppThemeProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };
